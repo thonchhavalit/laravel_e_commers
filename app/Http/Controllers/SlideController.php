@@ -1,12 +1,13 @@
 <?php
 namespace App\Http\Controllers;
-use Illuminate\Http\Resquest;
 use App\Models\Slide;
+use Illuminate\Http\Request;
 
 class SlideController extends Controller
 {
     public function index(){
-        return view('admin.slideshow.index');
+        $slides = Slide::all(); // Fetch all slides from the database
+        return view('admin.slideshow.index', compact('slides')); // Pass slides to the view
 
     }
     public function create(){
@@ -14,24 +15,51 @@ class SlideController extends Controller
         
     }
     public function store(Request $request){
-        return redirect('admin.slide.index');
+        $slide = new Slide;
+        $slide->title = $request->title;
         
+        $imageFile = $request->image; //get from input 
+        $imageName = time().'.'.$imageFile->getClientOriginalExtension();
+        $imageFile->move(public_path('upload/admin/image/slide/'), $imageName);
+        $imagePath = 'upload/admin/image/slide/'.$imageName;
+
+        $slide->image = $imagePath;
+        $slide->save();
+        return redirect()->route('slide.index');
     }
     public function show($id){
-        return view('admin.slideshow.show');
+        $slide = Slide::findOrFail($id); // Fetch the slide by ID
+        return view('admin.slideshow.show', compact('slide'));
         
     }
     public function edit($id){
-        return view('admin.slideshow.edit');
+        $slide = Slide::findOrFail($id); // Fetch the slide by ID
+        return view('admin.slideshow.edit', compact('slide'));
         
     }
     public function update(Request $request, $id){
-        return redirect()->route('slides.index');
-        
+        $slide = Slide::findOrFail($id);
+    $slide->title = $request->title;
+
+    if ($request->hasFile('image')) {
+        $imageFile = $request->image;
+        $imageName = time().'.'.$imageFile->getClientOriginalExtension();
+        $imageFile->move(public_path('upload/admin/image/slide/'), $imageName);
+        $imagePath = 'upload/admin/image/slide/'.$imageName;
+        $slide->image = $imagePath;
     }
+
+    $slide->save();
+    return redirect()->route('slide.index')->with('success', 'Slide updated successfully');
+}
+
     public function destroy($id)
     {
-        return redirect()->route('slides.index');
+        $slide = Slide::findOrFail($id);
+        $slide->delete();
+        return redirect()->route('slide.index')->with('success', 'Slide deleted successfully');
         
     }
-}
+
+        
+    }
